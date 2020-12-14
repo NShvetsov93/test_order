@@ -1,0 +1,11 @@
+development:
+    dialect: postgres
+    datasource: host=127.0.0.1 dbname=name user=test password=test sslmode=disable
+    dir: migrations
+    table: migrations
+
+production:
+    dialect: postgres
+    datasource: host=127.0.0.1 dbname=name user=test password=test sslmode=disable
+    dir: migrations
+    table: migrations
