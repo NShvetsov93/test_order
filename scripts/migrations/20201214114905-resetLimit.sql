@@ -16,7 +16,6 @@ begin
 commit;
 end;
 $$
-language plpgsql;
 -- +migrate StatementEnd
 
 -- +migrate Down
