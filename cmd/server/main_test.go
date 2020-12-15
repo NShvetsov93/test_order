@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -10,39 +11,63 @@ import (
 )
 
 type testCaseNews struct {
-	body    []byte
-	URL     string
-	wantErr bool
+	name      string
+	body      []byte
+	URL       string
+	wantErr   bool
+	errString string
 	// err     error
 }
 
 const localURL = "http://localhost:8080"
 
-func TestAdd(t *testing.T) {
-	for _, item := range getAddTestCases() {
-		req, _ := http.NewRequest(http.MethodPost, localURL+item.URL, bytes.NewBuffer(item.body))
-		_, err := http.DefaultClient.Do(req)
-		if item.wantErr {
-			require.Error(t, err)
-			assert.Equal(t, true, true)
-		} else {
-			require.NoError(t, err)
-			assert.Equal(t, true, true)
-		}
+func TestHttp(t *testing.T) {
+	for _, item := range getTestCases() {
+		t.Run(item.name, func(t *testing.T) {
+			req, _ := http.NewRequest(http.MethodPost, localURL+item.URL, bytes.NewBuffer(item.body))
+			res, err := http.DefaultClient.Do(req)
+			if item.wantErr {
+				body, _ := ioutil.ReadAll(res.Body)
+				assert.Equal(t, item.errString, string(body))
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
-func getAddTestCases() []testCaseNews {
+func getTestCases() []testCaseNews {
 	return []testCaseNews{
 		{
+			name:    "first",
 			body:    []byte(`{"product_id": 1,"quantity": 1}`),
 			URL:     "/store/add",
 			wantErr: false,
 		},
 		{
-			body:    []byte(`{"product_id": 1}`),
-			URL:     "/store/add",
-			wantErr: true,
+			name:      "second",
+			body:      []byte(`{"product_id": 1}`),
+			URL:       "/store/add",
+			wantErr:   true,
+			errString: "quantity required\n",
+		},
+		{
+			name:    "third",
+			body:    []byte(`{"product_id": 1,"quantity": 1}`),
+			URL:     "/store/order",
+			wantErr: false,
+		},
+		{
+			body:      []byte(`{"product_id": 1}`),
+			URL:       "/store/order",
+			wantErr:   true,
+			errString: "quantity required\n",
+		},
+		{
+			body:      []byte(`{"product_id": 1,"quantity": 100}`),
+			URL:       "/store/order",
+			wantErr:   true,
+			errString: "Too many requests\n",
 		},
 	}
 }
